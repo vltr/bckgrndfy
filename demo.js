@@ -5,5 +5,5 @@ window.onload = function() {
         height: 300,
         cellSize: 45
     });
-    demo.appendChild(canvas);
+    // demo.appendChild(canvas);
 }

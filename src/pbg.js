@@ -1,5 +1,69 @@
 // let's use vanilla js? :)
 (function (document) {
+    "use strict";
+
+    // erm ... workarounds?
+    if (typeof Object.prototype.extend === 'undefined') {
+        Object.prototype.extend = function(obj) {
+            for (var i in obj) {
+                if (obj.hasOwnProperty(i)) {
+                    this[i] = obj[i];
+                }
+            }
+        };
+    }
+
+    // took from the closure library ... ain't i sneaky?
+    // ...
+    // Copyright 2006 The Closure Library Authors. All Rights Reserved.
+    // Licensed under the Apache License, Version 2.0 (the "License");
+    // or not! :P
+    var safeFloor = function(num, opt_epsilon) {
+        return Math.floor(num + (opt_epsilon || 2e-15));
+    };
+
+    var clamp = function(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+    };
+
+    var hexTripletRe_ = /#(.)(.)(.)/;
+
+
+    var normalizeHex = function(hexColor) {
+        if (hexColor.length == 4) { // of the form #RGB
+            hexColor = hexColor.replace(hexTripletRe_, '#$1$1$2$2$3$3');
+        }
+        return hexColor.toLowerCase();
+    };
+
+    var blend = function(rgb1, rgb2, factor) {
+        factor = clamp(factor, 0, 1);
+
+        return [
+            Math.round(factor * rgb1[0] + (1.0 - factor) * rgb2[0]),
+            Math.round(factor * rgb1[1] + (1.0 - factor) * rgb2[1]),
+            Math.round(factor * rgb1[2] + (1.0 - factor) * rgb2[2])
+        ];
+    };
+
+    var hexToRgb = function(hexColor) {
+        hexColor = normalizeHex(hexColor);
+        var r = parseInt(hexColor.substr(1, 2), 16);
+        var g = parseInt(hexColor.substr(3, 2), 16);
+        var b = parseInt(hexColor.substr(5, 2), 16);
+
+        return [r, g, b];
+    };
+
+    // from http://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
+    var componentToHex = function(c) {
+        var hex = c.toString(16);
+        return hex.length == 1 ? "0" + hex : hex;
+    };
+
+    var rgbToHex = function (r, g, b) {
+        return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+    };
 
 
     /*
@@ -59,7 +123,7 @@
 
         /* Check for coincident points */
         if (fabsy1y2 < EPSILON && fabsy2y3 < EPSILON) {
-            throw new Error("Eek! Coincident points!"); // TODO change this error
+            throw new Error("Eek! Coincident points!"); // TODO why throw?
         }
 
         if (fabsy1y2 < EPSILON) {
@@ -89,6 +153,7 @@
 
         dx = x2 - xc;
         dy = y2 - yc;
+
         return {
             i: i,
             j: j,
@@ -256,8 +321,7 @@
         return [u, v];
     };
 
-
-
+    /*
     goog.require('goog.dom');
     goog.require('goog.array');
     goog.require('goog.object');
@@ -266,6 +330,7 @@
     goog.require('goog.style');
     goog.require('goog.testing.PseudoRandom');
     goog.require('goog.crypt.Md5');
+    */
 
     /*
      * lowpolybg.js
@@ -336,17 +401,6 @@
         return this.drawTriangles_(this.params);
     };
 
-    // from http://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
-    var componentToHex = function(c) {
-        var hex = c.toString(16);
-        return hex.length == 1 ? "0" + hex : hex;
-    };
-
-    var rgbToHex = function (r, g, b) {
-        // return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
-        return componentToHex(r) + componentToHex(g) + componentToHex(b);
-    };
-
     var drawTriangles_ = function(params) {
         var canvas = document.createElement('canvas');
         canvas.id = params.identifier;
@@ -367,7 +421,7 @@
             context.lineTo.apply(context, triangle['vertices'][2]);
             context.fill();
             context.stroke();
-        });
+        }
 
         return canvas;
     };
@@ -375,8 +429,10 @@
     var calcParams_ = function(identifier, opts) {
         var self = this;
         var params = {};
-        goog.object.extend(params, this.defaultOpts);
-        goog.object.extend(params, opts);
+        // goog.object.extend(params, defaultOpts);
+        params.extend(defaultOpts);
+        // goog.object.extend(params, opts);
+        params.extend(opts);
         params.identifier = identifier;
 
         // calculate characters from identifier string
@@ -391,7 +447,7 @@
         params.rand = new goog.testing.PseudoRandom(params.seed);
 
         params.points = this.generatePoints_(params);
-        params.indices = wythe.delaunay.triangulate(params.points);
+        params.indices = triangulate(params.points);
         params.triangles = [];
         for (var index = 0; index < params.indices.length; index += 3) {
     		var vertices = [params.points[params.indices[index]], params.points[params.indices[index + 1]], params.points[params.indices[index + 2]]];
@@ -405,19 +461,19 @@
         this.params = params;
     };
 
-    wythe.lowpolybg.getGravityCenter_ = function(vertices){
-    	var x = goog.math.safeFloor((vertices[0][0] + vertices[1][0] + vertices[2][0])/3);
-    	var y = goog.math.safeFloor((vertices[0][1] + vertices[1][1] + vertices[2][1])/3);
+    var getGravityCenter_ = function(vertices){
+    	var x = safeFloor((vertices[0][0] + vertices[1][0] + vertices[2][0])/3);
+    	var y = safeFloor((vertices[0][1] + vertices[1][1] + vertices[2][1])/3);
     	return [x, y];
     }
 
-    wythe.lowpolybg.simpleHash_ = function(identifier) {
+    var simpleHash_ = function(identifier) {
         var hashMethod = new goog.crypt.Md5();
         hashMethod.update(identifier);
         return hashMethod.digest();
     };
 
-    wythe.lowpolybg.getColorsFromHash_ = function(palette, hash, axis) {
+    var getColorsFromHash_ = function(palette, hash, axis) {
         // every 2 bytes stands for color, axis = 0 for x, axis = 1 for y
         var index = this.getNumberFromHash_(hash, axis * 2, 2);
         if (palette instanceof Array) {
@@ -428,10 +484,10 @@
         return palette[keys[index % keys.length]];
     };
 
-    wythe.lowpolybg.calculateGradientColor_ = function(params, x, y) {
+    var calculateGradientColor_ = function(params, x, y) {
         var xColor, yColor;
         //calculate x color
-        var startXColorIndex = goog.math.safeFloor(x / params.width * (params.xColors.length - 1));
+        var startXColorIndex = safeFloor(x / params.width * (params.xColors.length - 1));
         if (startXColorIndex < 0) {
             startXColorIndex = 0;
         }
@@ -444,10 +500,10 @@
         }
         var xStep = params.width / params.xColors.length;
         var xFactor = (x % xStep) / xStep;
-        xColor = goog.color.blend(goog.color.hexToRgb(params.xColors[startXColorIndex]), goog.color.hexToRgb(params.xColors[endXColorIndex]), xFactor);
+        xColor = blend(goog.color.hexToRgb(params.xColors[startXColorIndex]), goog.color.hexToRgb(params.xColors[endXColorIndex]), xFactor);
 
         //calculate y color
-        var startYColorIndex = goog.math.safeFloor(y / params.height * (params.yColors.length - 1));
+        var startYColorIndex = safeFloor(y / params.height * (params.yColors.length - 1));
         if (startYColorIndex < 0) {
             startYColorIndex = 0;
         }
@@ -460,17 +516,17 @@
         }
         var yStep = params.height / params.yColors.length;
         var yFactor = (y % yStep) / yStep;
-        yColor = goog.color.blend(goog.color.hexToRgb(params.yColors[startYColorIndex]), goog.color.hexToRgb(params.yColors[endYColorIndex]), yFactor);
+        yColor = blend(goog.color.hexToRgb(params.yColors[startYColorIndex]), goog.color.hexToRgb(params.yColors[endYColorIndex]), yFactor);
 
-        return goog.color.blend(xColor, yColor, 0.5);
+        return blend(xColor, yColor, 0.5);
     };
 
-    wythe.lowpolybg.getSeedFromHash_ = function(hash) {
+    var getSeedFromHash_ = function(hash) {
         // last 4 bytes stands for color
         return this.getNumberFromHash_(hash, 12, 4);
     };
 
-    wythe.lowpolybg.getNumberFromHash_ = function(hash, startIndex, length) {
+    var getNumberFromHash_ = function(hash, startIndex, length) {
         var index;
         var value = 0;
         for (index = startIndex; index < startIndex + length; index++) {
@@ -480,10 +536,10 @@
         return value;
     }
 
-    wythe.lowpolybg.generatePoints_ = function(params) {
+    var generatePoints_ = function(params) {
         // calculate how many cells we're going to have on each axis (pad by 2 cells on each edge)
-        params.xCellAmount = goog.math.safeFloor((params.width + 4 * params.cellSize) / params.cellSize);
-        params.yCellAmount = goog.math.safeFloor((params.height + 4 * params.cellSize) / params.cellSize);
+        params.xCellAmount = safeFloor((params.width + 4 * params.cellSize) / params.cellSize);
+        params.yCellAmount = safeFloor((params.height + 4 * params.cellSize) / params.cellSize);
 
         // figure out the bleed widths to center the grid
         params.xOutBounds = ((params.xCellAmount * params.cellSize) - params.width) / 2;
@@ -497,10 +553,14 @@
             for (var j = -params.yOutBounds; j < params.height + params.yOutBounds; j += params.cellSize) {
                 var x = i + params.cellSize / 2 + params.rand.random() * params.variance * 2 - params.variance;
                 var y = j + params.cellSize / 2 + params.rand.random() * params.variance * 2 - params.variance;
-                points.push([goog.math.safeFloor(x), goog.math.safeFloor(y)]);
+                points.push([safeFloor(x), safeFloor(y)]);
             }
         }
         return points;
     };
 
 })(document);
+
+function generatePolyCanvas () {
+    // wow
+}
