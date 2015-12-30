@@ -2,7 +2,7 @@
 
 Backgroundify! (or bckgrndfy) is an attempt to create a pleasant, no-so-fancy-featured (but loosely coupled in some aspects) background generator for the browser.
 
-This project is a fork of [closure-low-poly-background](https://github.com/waythe/closure-low-poly-background), which uses Google's Closure library aaaaaand I wanted something more lightweight, Vanilla JS.
+This project is a fork of [closure-low-poly-background](https://github.com/waythe/closure-low-poly-background), which uses Google's Closure library aaaaaand I wanted something more lightweight, Vanilla JS (3,7Kb minified + gzipped).
 
 There are many others (IMHO) out there, being [Trianglify](http://qrohlf.com/trianglify/) the best one. Yes, it's the best. I just couldn't use it (which led me to do Backgroundify!) because of its GPL license. Don't get me wrong, I love GPL. I use mostly GPL / free software in my Linux (GPL) box. If you won't have any trouble about using GPL, **I strongly advise you** to use [Trianglify](http://qrohlf.com/trianglify/) :)
 
@@ -71,7 +71,7 @@ Checkout the demo, which uses [Please JS](http://www.checkman.io/please/) to gen
     height: 200, // Height of the generated canvas
     cellSize: 30, // Expect size of triangle blocks, actual size will be randomized by variance parameter
     variance: 0.75, // Defined how much to randomize the block size
-    palette: [chroma.]DEFAULT_PALETTE, // Palette of the canvas, this directly influence the generated result, by default we use ColorBrewer for chroma.js
+    palette: /* from chroma */ DEFAULT_PALETTE, // Palette of the canvas, this directly influence the generated result, by default we use ColorBrewer for chroma.js
     shareColor: true, // If set to true, x and y will share the same palette. Recommend to keep it 'true', using different palette sometime will make the graph too messy.
     lineWidth: 1 // Line width of the triangles
 }
