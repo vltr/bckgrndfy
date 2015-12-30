@@ -1,6 +1,6 @@
 {
   "name": "bckgrndfy",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Backgroundify! (or bckgrndfy) is an attempt to create a pleasant, no-so-fancy-featured (but loosely coupled in some aspects) background generator for the browser.",
   "directories": {
     "example": "demo"
