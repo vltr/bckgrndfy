@@ -1,0 +1,15 @@
+{
+    "name": "bckgrndfy",
+    "homepage": "https://github.com/vltr/bckgrndfy",
+    "main": "dist/bckgrndfy.min.js",
+    "authors": [
+        "Richard Kuesters <rkuesters@gmail.com>"
+    ],
+    "keywords": ["background", "svg", "canvas"],
+    "description": "Backgroundify! (or bckgrndfy) is an attempt to create a pleasant, no-so-fancy-featured (but loosely coupled in some aspects) background generator for the browser.",
+    "license": "Apache-2.0",
+    "ignore": [
+        "**/.*",
+        "node_modules"
+    ]
+}

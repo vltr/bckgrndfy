@@ -1,0 +1,37 @@
+{
+  "name": "bckgrndfy",
+  "version": "0.1.0",
+  "description": "Backgroundify! (or bckgrndfy) is an attempt to create a pleasant, no-so-fancy-featured (but loosely coupled in some aspects) background generator for the browser.",
+  "directories": {
+    "example": "demo"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/vltr/bckgrndfy.git"
+  },
+  "keywords": [
+    "background",
+    "svg",
+    "canvas"
+  ],
+  "author": "Richard Kuesters <rkuesters@gmail.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/vltr/bckgrndfy/issues"
+  },
+  "homepage": "https://github.com/vltr/bckgrndfy",
+  "npmName": "bckgrndfy",
+  "npmFileMap": [
+    {
+      "basePath": "dist",
+      "files": [
+        "bckgrndfy.min.js"
+      ]
+    }
+  ],
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-contrib-jshint": "^0.11.3",
+    "grunt-contrib-uglify": "^0.11.0"
+  }
+}

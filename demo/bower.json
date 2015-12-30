@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "name": "bckgrndfy-demo",
+  "dependencies": {
+    "pleasejs": "~0.4.2"
+  }
+}
