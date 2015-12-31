@@ -1,7 +1,7 @@
 {
   "name": "bckgrndfy",
-  "version": "1.0.0",
-  "description": "Backgroundify! (or bckgrndfy) is an attempt to create a pleasant, no-so-fancy-featured (but loosely coupled in some aspects) background generator for the browser.",
+  "version": "1.2.0",
+  "description": "Backgroundify! (or bckgrndfy) is an attempt to create a pleasant, not-so-fancy-featured (but loosely coupled in some aspects) background generator for the browser.",
   "directories": {
     "example": "demo"
   },
@@ -31,7 +31,11 @@
   ],
   "devDependencies": {
     "grunt": "^0.4.5",
+    "grunt-contrib-concat": "^0.5.1",
     "grunt-contrib-jshint": "^0.11.3",
     "grunt-contrib-uglify": "^0.11.0"
+  },
+  "dependencies": {
+    "voronoi": "^1.0.0"
   }
 }

@@ -6,10 +6,12 @@
         "Richard Kuesters <rkuesters@gmail.com>"
     ],
     "keywords": ["background", "svg", "canvas"],
-    "description": "Backgroundify! (or bckgrndfy) is an attempt to create a pleasant, no-so-fancy-featured (but loosely coupled in some aspects) background generator for the browser.",
+    "description": "Backgroundify! (or bckgrndfy) is an attempt to create a pleasant, not-so-fancy-featured (but loosely coupled in some aspects) background generator for the browser.",
     "license": "Apache-2.0",
     "ignore": [
         "**/.*",
-        "node_modules"
+        "node_modules",
+        "*.png",
+        "demo/bower_components"
     ]
 }

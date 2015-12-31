@@ -1,6 +1,6 @@
 # Backgroundify!
 
-Backgroundify! (or bckgrndfy) is an attempt to create a pleasant, no-so-fancy-featured (but loosely coupled in some aspects) background generator for the browser.
+Backgroundify! (or bckgrndfy) is an attempt to create a pleasant, not-so-fancy-featured (but loosely coupled in some aspects) background generator for the browser.
 
 This project is a fork of [closure-low-poly-background](https://github.com/waythe/closure-low-poly-background), which uses Google's Closure library aaaaaand I wanted something more lightweight, Vanilla JS (3,7Kb minified + gzipped).
 
@@ -8,7 +8,17 @@ There are many others (IMHO) out there, being [Trianglify](http://qrohlf.com/tri
 
 ## Quick demo output
 
-![image](https://github.com/vltr/bckgrndfy/raw/master/example.png)
+### Using Delaunay
+
+![image](https://github.com/vltr/bckgrndfy/raw/master/example-delaunay.png)
+
+### Using Voronoi without Lloyd's relaxation
+
+![image](https://github.com/vltr/bckgrndfy/raw/master/example-voronoi-no-relax.png)
+
+### Using Voronoi with Lloyd's relaxation
+
+![image](https://github.com/vltr/bckgrndfy/raw/master/example-voronoi-relax-15.png)
 
 ## Installing
 
@@ -51,6 +61,7 @@ window.onload = function() {
         width: 800,
         height: 600,
         cellSize: 55,
+        algorithm: 'delaunay', // or 'voronoi'
         variance: 0.75
     });
     canvas.style.left = '0px';
@@ -69,11 +80,17 @@ Checkout the demo, which uses [Please JS](http://www.checkman.io/please/) to gen
 {
     width: 400, // Width of the generated canvas
     height: 200, // Height of the generated canvas
-    cellSize: 30, // Expect size of triangle blocks, actual size will be randomized by variance parameter
-    variance: 0.75, // Defined how much to randomize the block size
     palette: /* from chroma */ DEFAULT_PALETTE, // Palette of the canvas, this directly influence the generated result, by default we use ColorBrewer for chroma.js
     shareColor: true, // If set to true, x and y will share the same palette. Recommend to keep it 'true', using different palette sometime will make the graph too messy.
-    lineWidth: 1 // Line width of the triangles
+    lineWidth: 1, // Line width of the triangles
+    elementId: undefined, // Optional: an ID to be used in the generated canvas element
+    algorithm: 'voronoi', // or 'delaunay'
+    // only for voronoi
+    distributed: true,
+    maxSteps: 15,
+    // only for delaunay
+    cellSize: 40, // Expect size of triangle blocks, actual size will be randomized by variance parameter
+    variance: 0.75, // Defined how much to randomize the block size
 }
 ```
 
@@ -82,13 +99,14 @@ Checkout the demo, which uses [Please JS](http://www.checkman.io/please/) to gen
 First, install all necessary packages from npm:
 
 ```
-$ npm i -l
+$ npm install -l
 ```
 
 Then, just run `grunt` to create `dist/bckgrndfy.min.js`.
 
 ## Borrowed from (and original credits):
 
+* https://github.com/gorhill/Javascript-Voronoi
 * https://github.com/waythe/closure-low-poly-background
 * https://github.com/ironwallaby/delaunay
 * https://github.com/gka/chroma.js/blob/master/src/colors/colorbrewer.coffee
@@ -98,7 +116,7 @@ Apache License Version 2.0
 
 ## Browser Compatibility
 
-Tested in these browsers (which means an image have appear and no JS warning was given):
+Tested in these browsers (which means an image have appear (and probably no JS warning was given)):
 
 - Chrom[e|ium] 47.0.2526.106 (under Arch Linux)
 - Firefox 43.0.1 (under Arch Linux)

@@ -368,16 +368,26 @@
         variance: 0.75, // Defined how much to randomize the block size
         palette: DEFAULT_PALETTE, // Palette of the canvas, this directly influence the generated result, by default we use ColorBrewer for chroma.js
         shareColor: true, // If set to true, x and y will share the same palette. Recommend to keep it 'true', using different palette sometime will make the graph too messy.
-        lineWidth: 1 // Line width of the triangles
+        lineWidth: 1, // Line width of the triangles,
+        maxSteps: 10,
+        distributed: true,
+        algorithm: 'delaunay' // voronoi
     };
 
     // ------------------------------------------------------------------------
     // default color and polygonal functions, without "this"
 
     var getGravityCenter_ = function (vertices) {
-        var x = _closure.safeFloor((vertices[0][0] + vertices[1][0] + vertices[2][0])/3);
-        var y = _closure.safeFloor((vertices[0][1] + vertices[1][1] + vertices[2][1])/3);
-        return [x, y];
+        var t = vertices.length,
+            x = 0,
+            y = 0;
+
+        for (var i = 0; i < t; i++) {
+            x += vertices[i][0];
+            y += vertices[i][1];
+        }
+
+        return [_closure.safeFloor(x / t), _closure.safeFloor(y / t)];
     };
 
     var getColorsFromHash_ = function (params) {
@@ -391,7 +401,7 @@
     // ------------------------------------------------------------------------
     // now the stuff, kind-of rewritten
 
-    var drawTriangles_ = function (params) {
+    var createCanvas_ = function(params) {
         var canvas = document.createElement('canvas');
         if (params.elementId) {
             canvas.id = params.elementId;
@@ -402,6 +412,23 @@
         var context = canvas.getContext('2d');
         context.canvas.width = params.width;
         context.canvas.height = params.height;
+
+        return {
+            el: canvas,
+            ctx: context
+        };
+    };
+
+    var draw_ = function(params) {
+        if (params.algorithm === 'delaunay') {
+            return drawDelaunay_(params);
+        }
+        return drawVoronoi_(params);
+    };
+
+    var drawDelaunay_ = function (params) {
+        var canvasObj = createCanvas_(params),
+            context = canvasObj.ctx;
 
         for (var i = 0; i < params.triangles.length; i++) {
             var triangle = params.triangles[i];
@@ -415,7 +442,38 @@
             context.stroke();
         }
 
-        return canvas;
+        return canvasObj.el;
+    };
+
+    var drawVoronoi_ = function (params) {
+        var canvasObj = createCanvas_(params),
+            context = canvasObj.ctx;
+
+        if (!params.cells) {
+            return canvasObj.el;
+        }
+        context.canvas.width = params.width;
+        context.canvas.height = params.height;
+
+        // cells
+        var cells = params.cells,
+            iCell = cells.length,
+            cell, halfedges, nHalfedges, iHalfedge, v;
+
+        while (iCell--) {
+            cell = cells[iCell];
+            context.fillStyle = context.strokeStyle = _so.rgbToHex(cell.color[0], cell.color[1], cell.color[2]);
+            context.lineWidth = params.lineWidth;
+            context.beginPath();
+            context.moveTo(cell.vertices[0][0], cell.vertices[0][1]);
+            for (var i = 0; i < cell.vertices.length; i++) {
+                context.lineTo(cell.vertices[i][0], cell.vertices[i][1]);
+            }
+            context.fill();
+            context.stroke();
+        }
+
+        return canvasObj.el;
     };
 
     var calculateGradientColor_ = function (params, x, y) {
@@ -455,6 +513,48 @@
         return _closure.blend(xColor, yColor, 0.5);
     };
 
+    var cellArea_ = function(cell) {
+        var area = 0,
+            halfedges = cell.halfedges,
+            iHalfedge = halfedges.length,
+            halfedge,
+            p1, p2;
+
+        while (iHalfedge--) {
+            halfedge = halfedges[iHalfedge];
+            p1 = halfedge.getStartpoint();
+            p2 = halfedge.getEndpoint();
+            area += p1.x * p2.y;
+            area -= p1.y * p2.x;
+        }
+        area /= 2;
+        return area;
+    };
+
+    var cellCentroid_ = function(cell) {
+        var x = 0, y = 0,
+            halfedges = cell.halfedges,
+            iHalfedge = halfedges.length,
+            halfedge,
+            v, p1, p2;
+        while (iHalfedge--) {
+            halfedge = halfedges[iHalfedge];
+            p1 = halfedge.getStartpoint();
+            p2 = halfedge.getEndpoint();
+            v = p1.x * p2.y - p2.x * p1.y;
+            x += (p1.x + p2.x) * v;
+            y += (p1.y + p2.y) * v;
+        }
+        v = cellArea_(cell) * 6;
+        return {x: x / v,y: y / v};
+    };
+
+    var distance_ = function(a, b) {
+        var dx = a.x - b.x,
+            dy = a.y - b.y;
+        return Math.sqrt(dx * dx + dy * dy);
+    };
+
     var calcParams_ = function (opts) {
         var params = {};
         params = _so.extendObj(params, defaultOpts);
@@ -465,18 +565,132 @@
         } else {
             params.yColors = getColorsFromHash_(params);
         }
+        if (params.algorithm === 'delaunay') {
+            return calcParamsDelaunay_(params);
+        }
+        return calcParamsVoronoi_(params);
+    };
 
+    var calcParamsDelaunay_ = function (params) {
         params.points = generatePoints_(params);
         params.indices = _delaunay.triangulate(params.points);
         params.triangles = [];
         for (var index = 0; index < params.indices.length; index += 3) {
-    		var vertices = [params.points[params.indices[index]], params.points[params.indices[index + 1]], params.points[params.indices[index + 2]]];
-    		var gravityCenter = getGravityCenter_(vertices);
+            var vertices = [params.points[params.indices[index]], params.points[params.indices[index + 1]], params.points[params.indices[index + 2]]];
+            var gravityCenter = getGravityCenter_(vertices);
             params.triangles.push({
                 'vertices': vertices,
                 'color': calculateGradientColor_(params, gravityCenter[0], gravityCenter[1])
             });
         }
+        return params;
+    };
+
+    var calcParamsVoronoi_ = function (params) {
+        var voronoi = new Voronoi();  // jshint ignore:line
+        var margin = 0.01;
+        var bbox = {xl: 0, xr: params.width, yt: 0, yb: params.height};
+        var totalSites = 800;
+        var sites = [];
+        var diagram, cells, iCell, cell, i;
+
+        var xmargin = params.width * margin,
+            ymargin = params.height * margin,
+            xo = xmargin,
+            dx = params.width - xmargin * 2,
+            yo = ymargin,
+            dy = params.height - ymargin * 2;
+
+        if (params.distributed) {
+
+            params.maxSteps = (typeof params.maxSteps === 'number' && params.maxSteps <= 15) ? params.maxSteps : 15;
+
+            for (i = 0; i < totalSites; i++) {
+                sites.push({
+                    x: Math.round((xo + Math.random() * dx) * 10) / 10,
+                    y: Math.round((yo + Math.random() * dy) * 10) / 10
+                });
+            }
+
+            var doTheMath = function(_sites, step, again) {
+
+                var _diagram = voronoi.compute(_sites, bbox),
+                    _cells = _diagram.cells,
+                    _iCell = _cells.length,
+                    _cell, _site, _dist, rn;
+
+                _sites.length = 0;
+
+                var p = 1 / _iCell * 0.1;
+
+                while (_iCell--) {
+                    _cell = _cells[_iCell];
+                    rn = Math.random();
+                    // probability of apoptosis
+                    if (rn < p) {
+                        continue;
+                    }
+
+                    _site = cellCentroid_(_cell);
+                    _dist = distance_(_site, _cell.site);
+                    again = again || _dist > 1;
+                    // don't relax too fast
+                    if (_dist > 2) {
+                        _site.x = (_site.x + _cell.site.x) / 2;
+                        _site.y = (_site.y + _cell.site.y) / 2;
+                    }
+                    // probability of mytosis
+                    if (rn > (1 - p)) {
+                        _dist /= 2;
+                        _sites.push({
+                            x: _site.x + (_site.x - _cell.site.x) / _dist,
+                            y: _site.y + (_site.y - _cell.site.y) / _dist,
+                        });
+                    }
+                    _sites.push(_site);
+                }
+                return (again && step < params.maxSteps) ? doTheMath(_sites, step + 1, again) : _sites;
+            };
+
+            sites = doTheMath(sites, 0, false);
+
+        } else {
+            for (i = 0; i < totalSites; i++) {
+                sites.push({
+                    x: xo + Math.random() * dx + Math.random() / dx,
+                    y: yo + Math.random() * dy + Math.random() / dy
+                });
+            }
+        }
+
+        diagram = voronoi.compute(sites, bbox);
+
+        params.cells = [];
+
+        cells = diagram.cells;
+        iCell = cells.length;
+        var halfedges, nHalfedges, iHalfedge, v;
+
+        while (iCell--) {
+            var vertices = [];
+            cell = cells[iCell];
+            halfedges = cell.halfedges;
+            nHalfedges = halfedges.length;
+            if (nHalfedges) {
+                v = halfedges[0].getStartpoint();
+                vertices.push([v.x, v.y]);
+                for (iHalfedge = 0; iHalfedge < nHalfedges; iHalfedge++) {
+                    v = halfedges[iHalfedge].getEndpoint();
+                    vertices.push([v.x, v.y]);
+                }
+                var gravityCenter = getGravityCenter_(vertices);
+                params.cells.push({
+                    'vertices': vertices,
+                    'color': calculateGradientColor_(params, gravityCenter[0], gravityCenter[1])
+                });
+            }
+        }
+
         return params;
     };
 
@@ -503,9 +717,9 @@
         return points;
     };
 
-    var bckgrndfy = function (identifier, opts) {
-        var params = calcParams_(identifier, opts);
-        return drawTriangles_(params);
+    var bckgrndfy = function (opts) {
+        var params = calcParams_(opts);
+        return draw_(params);
     };
 
     /* quickly borrower from fastclick! :) */

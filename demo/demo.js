@@ -18,9 +18,15 @@ window.onload = function() {
     var canvas = bckgrndfy({  // jshint ignore:line
         width: w,
         height: h,
-        cellSize: 55,
-        variance: 0.75,
-        palette: [complete_schema,]
+        palette: [complete_schema,],
+        lineWidth: 0,
+        algorithm: 'delaunay', // or 'voronoi'
+        // only for voronoi
+        distributed: true,
+        maxSteps: 15,
+        // only for delaunay
+        cellSize: 40,
+        variance: 0.25,
     });
     canvas.style.left = '0px';
     canvas.style.top = '0px';
